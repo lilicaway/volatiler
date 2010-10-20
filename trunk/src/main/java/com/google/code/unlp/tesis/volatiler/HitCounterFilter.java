@@ -29,9 +29,11 @@ public final class HitCounterFilter implements Filter {
 	    ServletException {
 
 	long start = System.currentTimeMillis();
+
 	filterChain.doFilter(request, response);
+
 	long end = System.currentTimeMillis();
-	log.warning("The requests took " + (end - start) + "ms: " + request.toString().replaceAll("\r?\n", "|"));
+	log.warning("The requests took " + (end - start) + "ms: " + ServletToStringUtil.toString(request));
     }
 
     public FilterConfig getFilterConfig() {

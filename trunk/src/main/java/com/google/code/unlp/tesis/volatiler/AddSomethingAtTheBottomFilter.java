@@ -27,11 +27,11 @@ public final class AddSomethingAtTheBottomFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException,
 	    ServletException {
-	log.warning("Adding something at the bottom of " + request);
+	log.warning("Adding something at the bottom of " + ServletToStringUtil.toString(request));
 
 	filterChain.doFilter(request, response);
 	response.getWriter().append("<h1>Filter is HERE!</h1>");
-	log.warning("Finishing Adding something at the bottom of " + request);
+	log.warning("Finishing Adding something at the bottom of " + ServletToStringUtil.toString(request));
     }
 
     public FilterConfig getFilterConfig() {
