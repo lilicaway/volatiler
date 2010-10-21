@@ -1,31 +1,29 @@
-package com.google.code.unlp.tesis.volatiler;
+package com.google.code.unlp.tesis.volatiler.filter;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-public final class AddSomethingAtTheBottomFilter implements Filter {
-    private FilterConfig filterConfig = null;
+import com.google.code.unlp.tesis.volatiler.ServletToStringUtil;
+
+public final class AddSomethingAtTheBottomFilter extends AbstractActivableFilter {
     private static final Logger log = Logger.getLogger(AddSomethingAtTheBottomFilter.class.getName());
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-	this.filterConfig = filterConfig;
+    public void doInit() throws ServletException {
     }
 
     @Override
-    public void destroy() {
-	this.filterConfig = null;
+    public void doDestroy() {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException,
+    public void doDoFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
+	    throws IOException,
 	    ServletException {
 	log.warning("Adding something at the bottom of " + ServletToStringUtil.toString(request));
 
@@ -34,7 +32,4 @@ public final class AddSomethingAtTheBottomFilter implements Filter {
 	log.warning("Finishing Adding something at the bottom of " + ServletToStringUtil.toString(request));
     }
 
-    public FilterConfig getFilterConfig() {
-	return filterConfig;
-    }
 }
