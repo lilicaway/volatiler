@@ -1,4 +1,4 @@
-package com.google.code.unlp.tesis.volatiler;
+package com.google.code.unlp.tesis.volatiler.filter;
 
 import java.io.CharArrayWriter;
 import java.io.IOException;
@@ -8,9 +8,7 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -21,22 +19,23 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-public final class XsltFilter implements Filter {
+import com.google.code.unlp.tesis.volatiler.CharResponseWrapper;
+import com.google.code.unlp.tesis.volatiler.ServletToStringUtil;
+
+public final class XsltFilter extends AbstractActivableFilter {
 
     /**
      * Parameter to be used in the web.xml as an init-param.
      */
     public static final String XSL_PATH = "xslPath";
 
-    private FilterConfig filterConfig = null;
     private static final Logger log = Logger.getLogger(XsltFilter.class.getName());
 
     private String xslPath;
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-	this.filterConfig = filterConfig;
-	xslPath = filterConfig.getInitParameter(XSL_PATH);
+    public void doInit() throws ServletException {
+	xslPath = getFilterConfig().getInitParameter(XSL_PATH);
 	if (xslPath == null) {
 	    throw new ServletException("init-param '" + XSL_PATH + "' is required. Example filter config: \n"
 		    + exampleFilterConfig());
@@ -50,12 +49,11 @@ public final class XsltFilter implements Filter {
     }
 
     @Override
-    public void destroy() {
-	this.filterConfig = null;
+    public void doDestroy() {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
+    public void doDoFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
 	    ServletException {
 	long startFilter = System.currentTimeMillis();
 
@@ -102,7 +100,4 @@ public final class XsltFilter implements Filter {
 	}
     }
 
-    public FilterConfig getFilterConfig() {
-	return filterConfig;
-    }
 }
