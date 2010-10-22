@@ -22,7 +22,7 @@ import javax.xml.transform.stream.StreamSource;
 import com.google.code.unlp.tesis.volatiler.CharResponseWrapper;
 import com.google.code.unlp.tesis.volatiler.ServletToStringUtil;
 
-public final class XsltFilter extends AbstractActivableFilter {
+public final class XsltFilter extends AbstractAffinityActivableFilter {
 
     /**
      * Parameter to be used in the web.xml as an init-param.
@@ -35,6 +35,7 @@ public final class XsltFilter extends AbstractActivableFilter {
 
     @Override
     public void doInit() throws ServletException {
+	super.doInit();
 	xslPath = getFilterConfig().getInitParameter(XSL_PATH);
 	if (xslPath == null) {
 	    throw new ServletException("init-param '" + XSL_PATH + "' is required. Example filter config: \n"
@@ -57,7 +58,14 @@ public final class XsltFilter extends AbstractActivableFilter {
 	    ServletException {
 	long startFilter = System.currentTimeMillis();
 
+	if (!getAffinityResolver().matchAffinityBeforeFilterChain(request, response)) {
+	    log.warning("XsltFilter not applied because of affinity on " + ServletToStringUtil.toString(request));
+	    chain.doFilter(request, response);
+	    return;
+	}
+
 	log.warning("Applying XsltFilter on " + ServletToStringUtil.toString(request));
+
 	String contentType;
 	String styleSheet;
 	contentType = "text/html";
@@ -74,18 +82,22 @@ public final class XsltFilter extends AbstractActivableFilter {
 	    long startChain = System.currentTimeMillis();
 	    chain.doFilter(request, responseWrapper);
 	    long endChain = System.currentTimeMillis();
+	    if (getAffinityResolver().matchAffinityAfterFilterChain(request, responseWrapper)) {
 
-	    // Get response from servlet
-	    StringReader sr = new StringReader(new String(responseWrapper.toString()));
-	    Source xmlSource = new StreamSource(sr);
+		// Get response from servlet
+		StringReader sr = new StringReader(new String(responseWrapper.toString()));
+		Source xmlSource = new StreamSource(sr);
 
-	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	    Transformer transformer = transformerFactory.newTransformer(styleSource);
-	    CharArrayWriter caw = new CharArrayWriter();
-	    StreamResult result = new StreamResult(caw);
-	    transformer.transform(xmlSource, result);
-	    // response.setContentLength(caw.toString().length());
-	    out.write(caw.toString());
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = transformerFactory.newTransformer(styleSource);
+		CharArrayWriter caw = new CharArrayWriter();
+		StreamResult result = new StreamResult(caw);
+		transformer.transform(xmlSource, result);
+		// response.setContentLength(caw.toString().length());
+		out.write(caw.toString());
+	    } else {
+		out.write(responseWrapper.toString());
+	    }
 
 	    long endFilter = System.currentTimeMillis();
 	    long totalTime = endFilter - startFilter;
