@@ -15,6 +15,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
@@ -31,22 +32,46 @@ public final class XsltFilter extends AbstractAffinityActivableFilter {
 
     private static final Logger log = Logger.getLogger(XsltFilter.class.getName());
 
-    private String xslPath;
+    private volatile String xslPath;
+
+    private final ThreadLocal<Transformer> transformer = new ThreadLocal<Transformer>() {
+	@Override
+	protected Transformer initialValue() {
+	    URL stylePathURL = this.getClass().getResource(xslPath);
+	    if (stylePathURL == null) {
+		throw new IllegalArgumentException("Could not find resource on xslPath='" + xslPath + "' on filter "
+			+ getFilterConfig().getFilterName());
+	    }
+	    String stylePath = stylePathURL.toString();
+	    Source styleSource = new StreamSource(stylePath);
+	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	    try {
+		return transformerFactory.newTransformer(styleSource);
+	    } catch (TransformerConfigurationException e) {
+		throw new IllegalArgumentException("Could not create xsl Transformer: " + e.getMessage(), e);
+	    }
+	}
+    };
 
     @Override
     public void doInit() throws ServletException {
 	super.doInit();
 	xslPath = getFilterConfig().getInitParameter(XSL_PATH);
 	if (xslPath == null) {
-	    throw new ServletException("init-param '" + XSL_PATH + "' is required. Example filter config: \n"
-		    + exampleFilterConfig());
+	    throw new ServletException("init-param '" + XSL_PATH + "' is required.");
+	}
+	try {
+	    // This call ensures that we raise an exception early, when the
+	    // Filter is being initialized, if there is a problem in the xsl
+	    // configuration. The idea is to fail fast if there is a problem.
+	    getTransformer();
+	} catch (IllegalArgumentException e) {
+	    throw new ServletException(e);
 	}
     }
 
-    private String exampleFilterConfig() {
-	return "<filter>\n" + "  <filter-name>Xslt</filter-name>\n" + "  <filter-class>" + this.getClass().getName()
-		+ "</filter-class>\n" + "  <init-param>\n" + "    <param-name>" + XSL_PATH + "</param-name>\n"
-		+ "    <param-value>/xml/html.xsl</param-value>\n" + "  </init-param>\n" + "</filter>";
+    public Transformer getTransformer() {
+	return transformer.get();
     }
 
     @Override
@@ -66,33 +91,28 @@ public final class XsltFilter extends AbstractAffinityActivableFilter {
 
 	log.warning("Applying XsltFilter on " + ServletToStringUtil.toString(request));
 
-	String contentType;
-	String styleSheet;
-	contentType = "text/html";
-	styleSheet = this.xslPath;
-	response.setContentType(contentType);
+	response.setContentType("text/html");
 
 	PrintWriter out = response.getWriter();
 	CharResponseWrapper responseWrapper = new CharResponseWrapper((HttpServletResponse) response);
 	try {
-	    URL stylePathURL = this.getClass().getResource(styleSheet);
-	    String stylePath = stylePathURL.toString();
-	    Source styleSource = new StreamSource(stylePath);
-
 	    long startChain = System.currentTimeMillis();
 	    chain.doFilter(request, responseWrapper);
 	    long endChain = System.currentTimeMillis();
+
 	    if (getAffinityResolver().matchAffinityAfterFilterChain(request, responseWrapper)) {
 
 		// Get response from servlet
 		StringReader sr = new StringReader(new String(responseWrapper.toString()));
 		Source xmlSource = new StreamSource(sr);
 
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		Transformer transformer = transformerFactory.newTransformer(styleSource);
+		// Transform the response
 		CharArrayWriter caw = new CharArrayWriter();
 		StreamResult result = new StreamResult(caw);
-		transformer.transform(xmlSource, result);
+		getTransformer().transform(xmlSource, result);
+
+		// DO NOT write the content length or we will prevent outer
+		// filters from appending more content.
 		// response.setContentLength(caw.toString().length());
 		out.write(caw.toString());
 	    } else {

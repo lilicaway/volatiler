@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 public class CharResponseWrapper extends HttpServletResponseWrapper {
     private final CharArrayWriter output;
 
+    @Override
     public String toString() {
 	return output.toString();
     }
@@ -18,6 +19,8 @@ public class CharResponseWrapper extends HttpServletResponseWrapper {
 	output = new CharArrayWriter();
     }
 
+
+    @Override
     public PrintWriter getWriter() {
 	return new PrintWriter(output);
     }

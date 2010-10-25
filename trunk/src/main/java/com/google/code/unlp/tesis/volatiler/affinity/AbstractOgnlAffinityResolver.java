@@ -9,6 +9,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import ognl.OgnlException;
+import ognl.OgnlRuntime;
 
 import com.google.code.unlp.tesis.volatiler.ognl.OgnlExpression;
 
@@ -20,6 +21,14 @@ public abstract class AbstractOgnlAffinityResolver extends BaseAffinityResolver 
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
+	/*
+	 * The following is a workaround a to a mix of security restriction in
+	 * google app engine and unproper security checks on ognl. <a href=
+	 * "http://groups.google.com/group/google-appengine-java/browse_thread/thread/19018b0317f27817"
+	 * >link</a>
+	 */
+	OgnlRuntime.setSecurityManager(null);
+
 	parsedOgnlExpressionForBeforeFilterChain = createOgnlExpression(filterConfig,
 		getOgnlExpressionForBeforeFilterChain());
 	parsedOgnlExpressionForAfterFilterChain = createOgnlExpression(filterConfig,
@@ -86,31 +95,5 @@ public abstract class AbstractOgnlAffinityResolver extends BaseAffinityResolver 
 
     OgnlExpression getParsedOgnlExpressionForAfterFilterChain() {
 	return parsedOgnlExpressionForAfterFilterChain;
-    }
-
-    /**
-     *
-     */
-    private final static class RequestResponseWrapper {
-	private final ServletRequest request;
-	private final ServletResponse response;
-
-	public RequestResponseWrapper(ServletRequest request, ServletResponse response) {
-	    this.request = request;
-	    this.response = response;
-	}
-
-	public ServletRequest getRequest() {
-	    return request;
-	}
-
-	public ServletResponse getResponse() {
-	    return response;
-	}
-
-	@Override
-	public String toString() {
-	    return "request:" + request + "; response:" + response;
-	}
     }
 }

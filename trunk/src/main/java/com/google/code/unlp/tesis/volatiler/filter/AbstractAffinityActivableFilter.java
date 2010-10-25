@@ -7,6 +7,8 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
 import com.google.code.unlp.tesis.volatiler.affinity.AffinityResolver;
+import com.google.code.unlp.tesis.volatiler.affinity.BaseAffinityResolver;
+import com.google.code.unlp.tesis.volatiler.affinity.Initializable;
 
 /**
  * This abstract class just leaves the {@link FilterConfig} and the
@@ -23,12 +25,14 @@ public abstract class AbstractAffinityActivableFilter extends AbstractActivableF
     public void doInit() throws ServletException {
 	String affinityResolverClassName = getFilterConfig().getInitParameter(AFFINITY_RESOLVER_PARAMETER);
 	if (affinityResolverClassName == null) {
-	    throw new ServletException("init-param '" + AFFINITY_RESOLVER_PARAMETER + "' is required for filter "
-		    + getFilterConfig().getFilterName() + " of type " + this.getClass().getName());
+	    affinityResolverClassName = BaseAffinityResolver.class.getName();
 	}
 	try {
 	    Class<?> affinityResolverClass = Class.forName(affinityResolverClassName);
 	    affinityResolver = (AffinityResolver) affinityResolverClass.newInstance();
+	    if (affinityResolver instanceof Initializable) {
+		((Initializable) affinityResolver).init(getFilterConfig());
+	    }
 	} catch (ClassNotFoundException e) {
 	    throw new ServletException("Could not find class for " + AFFINITY_RESOLVER_PARAMETER + "='"
 		    + affinityResolverClassName + "': " + e.getMessage(), e);
