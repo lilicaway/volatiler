@@ -6,7 +6,7 @@ import javax.servlet.ServletContextListener;
 
 public class VolatilerRegistryListener implements ServletContextListener {
 
-    private static final String VOLATILE_REGISTRY_KEY = "VOLATILE_REGISTRY_KEY";
+    public static final String VOLATILE_REGISTRY_KEY = "VOLATILE_REGISTRY_KEY";
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
