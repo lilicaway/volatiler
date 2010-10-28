@@ -84,12 +84,12 @@ public final class XsltFilter extends AbstractAffinityActivableFilter {
 	long startFilter = System.currentTimeMillis();
 
 	if (!getAffinityResolver().matchAffinityBeforeFilterChain(request, response)) {
-	    log.warning("XsltFilter not applied because of affinity on " + ServletToStringUtil.toString(request));
+	    log.warning("XsltFilter (" + getFilterConfig().getFilterName() + ") not applied because of affinity on " + ServletToStringUtil.toString(request));
 	    chain.doFilter(request, response);
 	    return;
 	}
 
-	log.warning("Applying XsltFilter on " + ServletToStringUtil.toString(request));
+	log.warning("Applying XsltFilter (" + getFilterConfig().getFilterName() + ") on " + ServletToStringUtil.toString(request));
 
 	response.setContentType("text/html");
 
@@ -124,10 +124,10 @@ public final class XsltFilter extends AbstractAffinityActivableFilter {
 	    long totalChainCall = endChain - startChain;
 	    long totalTransformationTime = totalTime - totalChainCall;
 
-	    log.warning("Finishing Applying XsltFilter. [TT:" + totalTime + ",CT:" + totalChainCall + ",Tr:"
+	    log.warning("Finishing Applying XsltFilter (" + getFilterConfig().getFilterName() + ")  [TT:" + totalTime + ",CT:" + totalChainCall + ",Tr:"
 		    + totalTransformationTime + "] on " + ServletToStringUtil.toString(request));
 	} catch (Exception ex) {
-	    log.log(Level.WARNING, "Error while transforming. Returning unchanged content.", ex);
+	    log.log(Level.WARNING, "Error while transforming(" + getFilterConfig().getFilterName() + ") . Returning unchanged content.", ex);
 	    out.write(responseWrapper.toString());
 	}
     }
