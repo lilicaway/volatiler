@@ -21,6 +21,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.code.unlp.tesis.volatiler.affinity.BaseAffinityResolver;
+import com.google.code.unlp.tesis.volatiler.filter.regex.AbstractRegexMultipleReplacementFilter;
+import com.google.code.unlp.tesis.volatiler.filter.regex.RegexFilter;
 import com.google.code.unlp.tesis.volatiler.servlet.VolatileRegistry;
 import com.google.code.unlp.tesis.volatiler.servlet.VolatilerRegistryListener;
 
@@ -38,11 +40,11 @@ public class RegexFilterUnitTest {
 
     @Test
     public void testReplacement() throws Exception {
-	RegexFilter filter = new RegexFilter();
+	AbstractRegexMultipleReplacementFilter filter = new RegexFilter();
 	FilterConfig filterConfig = mock(FilterConfig.class);
 	when(filterConfig.getFilterName()).thenReturn("some filter");
 	when(filterConfig.getServletContext()).thenReturn(servletContext);
-	when(filterConfig.getInitParameter(RegexFilter.AFFINITY_RESOLVER_PARAMETER)).thenReturn(
+	when(filterConfig.getInitParameter(AbstractRegexMultipleReplacementFilter.AFFINITY_RESOLVER_PARAMETER)).thenReturn(
 		BaseAffinityResolver.class.getName());
 	when(filterConfig.getInitParameter(RegexFilter.REG_EX_INIT_PARAM)).thenReturn("p>");
 	when(filterConfig.getInitParameter(RegexFilter.REPLACEMENT_INIT_PARAM)).thenReturn("h4>");
